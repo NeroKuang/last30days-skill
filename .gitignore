@@ -49,3 +49,12 @@ docs/brainstorms/
 
 /work
 /print
+
+# Remote Research API local venv
+.venv-server/
+
+!server/.env.example
+
+.cursor/
+.env.zeabur.local
+.venv-server/
