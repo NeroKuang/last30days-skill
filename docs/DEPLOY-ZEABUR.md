@@ -62,3 +62,12 @@ zeabur project list
 zeabur variable create --help
 zeabur service redeploy --help
 ```
+
+## Live (NeroSP)
+
+- Service: `last30days-research-api-hone` (Git: `NeroKuang/last30days-skill` @ `main`)
+- Domains:
+  - https://last30days-research.zeabur.app
+  - https://last30days-api.zeabur.app
+- Auth secret: local `.env.zeabur.local` (`RESEARCH_API_KEY`) — never commit
+
