@@ -7,21 +7,21 @@ Git-backed only. **禁止** `zeabur deploy`（會上傳本機目錄、可能忽�
 - Fork: https://github.com/NeroKuang/last30days-skill
 - Upstream: https://github.com/mvanhorn/last30days-skill
 - Build: 根目錄 **`Dockerfile`**（等同 `Dockerfile.server`）
-- Listen: **5002**（SP 500x 規範）
+- Listen: 本機 **5002**；Zeabur 容器用 **8080**／`$PORT`（平台 HTTP 路由）
 
 ## 建立服務
 
 1. Zeabur Project（建議掛既有 NeroSP／個人 Project）→ **Add Service** → **Git** → `NeroKuang/last30days-skill`
 2. Root Directory: `/`（預設）
 3. 建置選 **Dockerfile**（根目錄 `Dockerfile`）
-4. 公開 HTTP port：**5002**（若 UI 可設；否則確認 Dockerfile `EXPOSE 5002` + CMD）
+4. 公開 HTTP：確認服務 port 對到 **8080**（或 Zeabur 注入的 `$PORT`）
 5. Variables（勿設 `NODE_ENV`；**勿**把 `LAST30DAYS_API_KEY` 當本服務 auth）：
 
 ```env
 RESEARCH_API_KEY=<openssl rand -hex 32>
 RESEARCH_TIMEOUT_SECONDS=600
 RESEARCH_MAX_CONCURRENCY=2
-RESEARCH_PORT=5002
+RESEARCH_PORT=8080
 LAST30DAYS_MEMORY_DIR=/tmp/last30days-memory
 ```
 

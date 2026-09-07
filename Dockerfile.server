@@ -15,12 +15,13 @@ COPY . /app
 
 ENV PYTHONUNBUFFERED=1 \
     RESEARCH_HOST=0.0.0.0 \
-    RESEARCH_PORT=5002 \
+    RESEARCH_PORT=8080 \
     LAST30DAYS_MEMORY_DIR=/tmp/last30days-memory
 
 # Do NOT set LAST30DAYS_API_BASE / LAST30DAYS_API_KEY on this service.
 # Do NOT set NODE_ENV (N/A). RESEARCH_API_KEY must be provided at runtime.
+# Zeabur injects PORT for HTTP routing; prefer it when present.
 
-EXPOSE 5002
+EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn server.app:app --host ${RESEARCH_HOST:-0.0.0.0} --port ${RESEARCH_PORT:-5002}"]
+CMD ["sh", "-c", "uvicorn server.app:app --host ${RESEARCH_HOST:-0.0.0.0} --port ${PORT:-${RESEARCH_PORT:-8080}}"]
