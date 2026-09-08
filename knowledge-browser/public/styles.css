@@ -246,10 +246,10 @@ a:hover { text-decoration: underline; }
 
 .map-canvas-wrap {
   position: relative;
-  height: min(56vh, 560px);
-  min-height: 380px;
+  height: min(72vh, 720px);
+  min-height: 480px;
   background:
-    linear-gradient(180deg, #fffdf8 0%, #f7f3eb 100%);
+    linear-gradient(180deg, #fffdf8 0%, #f3eee4 100%);
 }
 
 .markmap {
@@ -261,18 +261,27 @@ a:hover { text-decoration: underline; }
   width: 100%;
   height: 100%;
   overflow: auto;
-  padding: 8px 4px;
+  padding: 12px 14px 16px;
+  scrollbar-gutter: stable;
 }
 
 .mm-svg {
   display: block;
-  min-width: 100%;
+  width: auto;
+  height: auto;
+  max-width: none;
 }
 
 .mm-edge {
   fill: none;
-  stroke: #c5bcae;
-  stroke-width: 1.75;
+  stroke-width: 2.4;
+  opacity: 0.85;
+  stroke-linecap: round;
+}
+
+.mm-joint {
+  stroke: #fffdf8;
+  stroke-width: 1.5;
 }
 
 .mm-node {
@@ -283,9 +292,65 @@ a:hover { text-decoration: underline; }
   cursor: pointer;
 }
 
-.mm-node.mm-clickable:hover rect {
+.mm-node .mm-shadow {
+  fill: rgba(28, 25, 22, 0.07);
+}
+
+.mm-node.mm-clickable:hover .mm-card {
   filter: brightness(0.97);
-  stroke-width: 2.25;
+}
+
+.mm-node.branch.mm-clickable:hover .mm-card {
+  stroke-width: 2.75px;
+}
+
+.mm-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+}
+
+.mm-label.root {
+  color: #f7fffb;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+.mm-label.branch {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.mm-node.mm-soft:hover .mm-card {
+  stroke-width: 1.75px;
+}
+
+.mm-label.leaf {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.mm-lines {
+  width: 100%;
+  overflow: hidden;
+}
+
+.mm-line {
+  overflow: hidden;
+  max-width: 100%;
+  word-break: keep-all;
+  white-space: nowrap;
+}
+
+.mm-badge-g {
+  pointer-events: none;
 }
 
 .map-status {

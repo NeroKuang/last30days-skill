@@ -1,33 +1,32 @@
 # AI Coding Agents
 
 ## 持久記憶
-- 痛點：Session 一關就失憶
+- Session 失憶
 - OKF Agent Memory
 - OpenContext MCP
 - Rune / Heimdall
-- 行動：選 Git／MCP 記憶策略
+- 選 Git／MCP 記憶
 
 ## 安全沙箱
-- 痛點：不可信 repo + 代理會跑指令
-- Grith（syscall 監督）
-- GitSpawn（git-hijack）
-- 行動：盤點權限、隔離外部 repo
+- 不可信 repo 風險
+- Grith 監督
+- GitSpawn hijack
+- 盤點權限／隔離
 
 ## 採用與反彈
-- 痛點：全面 agentic vs slop／gloop
-- 職場政策驅動導入
-- r/gamedev 架構崩壞聲量
-- 行動：允許清單 + 試點回滾
+- 全面 agentic
+- slop／gloop 焦慮
+- r/gamedev 反彈
+- 允許清單＋試點
 
 ## 本地 Harness
-- 痛點：自架要比殼層不是只比模型
-- Pi / OpenCode / Qwen Agent
-- Claude Code 當對照 harness
-- 行動：兩殼層 bake-off
+- 比殼層不比模型
+- Pi / OpenCode
+- Claude Code 對照
+- 雙殼 bake-off
 
 ## 互補 Stack
-- 痛點：不該單挑一個贏家
-- Cursor（IDE 日常）
-- Claude Code（終端委派）
-- Skills + Function Hooks
-- 行動：畫預設路由（小改／重構／補全）
+- 不要單挑贏家
+- Cursor 日常
+- Claude Code 委派
+- Skills + Hooks

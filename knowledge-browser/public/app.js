@@ -6,6 +6,7 @@
     meta: null,
     activeNote: null,
     tree: null,
+    mapZoom: "fit",
   };
 
   const el = {
@@ -146,6 +147,8 @@
     } else {
       await openOverview(slug);
     }
+    // Re-apply fit after layout settles; keep map scrolled to origin.
+    requestAnimationFrame(() => applyMindmapZoom(state.mapZoom || "fit"));
   }
 
   /** Parse # / ## / - lists into a tree (markmap-style outline). */
@@ -192,67 +195,185 @@
   }
 
   function drawMindmap(tree, slug) {
-    // Horizontal tree layout (common web mindmap template)
-    const nodeH = 34;
-    const nodeGapY = 14;
-    const rankGapX = 210;
-    const pad = 28;
-    const nodeW = 168;
+    // Horizontal mind map: word-aware wrap, branch tints, 1:1 scroll (no shrink clipping).
+    const pad = 36;
+    const rankGapX = 236;
+    const nodeGapY = 12;
+    const padY = 10;
+    const padX = 16;
 
-    // Measure subtree leaf counts for vertical span
-    function leafCount(n) {
-      if (!n.children || !n.children.length) return 1;
-      return n.children.reduce((s, c) => s + leafCount(c), 0);
+    const BRANCHES = [
+      { stroke: "#0f5c4c", fill: "#cfe8e0", soft: "#e5f3ee", ink: "#0a3d34" },
+      { stroke: "#1a5f7a", fill: "#cde4ef", soft: "#e4f0f6", ink: "#0f3f52" },
+      { stroke: "#8a5a1a", fill: "#eed9b8", soft: "#f5ebda", ink: "#5c3b0e" },
+      { stroke: "#5c3d7a", fill: "#ddd0eb", soft: "#eee6f5", ink: "#3c2852" },
+      { stroke: "#1f6b4a", fill: "#c8e6d7", soft: "#e3f2ea", ink: "#134632" },
+      { stroke: "#7a3d4a", fill: "#e9cfd5", soft: "#f4e8eb", ink: "#522029" },
+    ];
+
+    function nodeWidth(depth) {
+      if (depth === 0) return 196;
+      if (depth === 1) return 168;
+      return 200;
     }
 
+    const measureCtx = (() => {
+      const c = document.createElement("canvas");
+      return c.getContext("2d");
+    })();
+
+    function fontFor(depth) {
+      if (depth === 0) return '700 14px "Noto Sans TC", "PingFang TC", sans-serif';
+      if (depth === 1) return '700 13px "Noto Sans TC", "PingFang TC", sans-serif';
+      return '500 12px "Noto Sans TC", "PingFang TC", sans-serif';
+    }
+
+    function textWidth(str, depth) {
+      measureCtx.font = fontFor(depth);
+      return measureCtx.measureText(str).width;
+    }
+
+    function tokenize(s) {
+      const tokens = [];
+      let ascii = "";
+      const flush = () => {
+        if (ascii) {
+          tokens.push(ascii);
+          ascii = "";
+        }
+      };
+      for (const ch of s) {
+        if (ch === " " || ch === "/" || ch === "·" || ch === "｜" || ch === "|" || ch === "／") {
+          flush();
+          tokens.push(ch);
+        } else if (/[A-Za-z0-9._+-]/.test(ch)) {
+          ascii += ch;
+        } else {
+          flush();
+          tokens.push(ch);
+        }
+      }
+      flush();
+      return tokens;
+    }
+
+    function wrapLines(text, depth) {
+      const raw = String(text || "").trim() || "—";
+      const maxW = nodeWidth(depth) - padX * 2 - (depth === 1 ? 8 : 0) - 4;
+      const tokens = tokenize(raw);
+      const lines = [];
+      let cur = "";
+
+      const pushLine = () => {
+        if (cur.trim()) lines.push(cur.trim());
+        cur = "";
+      };
+
+      for (const tok of tokens) {
+        const trial = cur + tok;
+        if (cur && textWidth(trial, depth) > maxW) {
+          pushLine();
+          // Hard-split overlong ASCII token
+          if (textWidth(tok, depth) > maxW && /^[A-Za-z0-9._+-]+$/.test(tok)) {
+            let rest = tok;
+            while (rest) {
+              let lo = 1;
+              let hi = rest.length;
+              while (lo < hi) {
+                const mid = Math.ceil((lo + hi) / 2);
+                if (textWidth(rest.slice(0, mid), depth) <= maxW) lo = mid;
+                else hi = mid - 1;
+              }
+              lines.push(rest.slice(0, lo));
+              rest = rest.slice(lo);
+            }
+            continue;
+          }
+        }
+        cur += tok;
+      }
+      pushLine();
+      if (lines.length > 3) {
+        const kept = lines.slice(0, 3);
+        kept[2] = `${kept[2].replace(/…$/, "")}…`;
+        return kept;
+      }
+      return lines.length ? lines : ["—"];
+    }
+
+    function measure(n, depth) {
+      n._depth = depth;
+      n._lines = wrapLines(n.text, depth);
+      n._w = nodeWidth(depth);
+      const lineH = depth === 0 ? 18 : depth === 1 ? 17 : 16;
+      const minH = depth === 0 ? 52 : depth === 1 ? 44 : 40;
+      // Extra 4px buffer so foreignObject descenders / subpixel never clip.
+      n._h = Math.max(minH, n._lines.length * lineH + padY * 2 + 4);
+      if (n.children?.length) {
+        n.children = n.children.filter((c) => String(c.text || "").trim());
+        n.children.forEach((c) => measure(c, depth + 1));
+      }
+    }
+    measure(tree, 0);
+
     const positions = new Map();
-    let cursorY = 0;
+    let cursorY = pad;
 
     function layout(n, depth) {
-      const leaves = leafCount(n);
-      const height = leaves * (nodeH + nodeGapY) - nodeGapY;
-      const y0 = cursorY;
-      if (!n.children || !n.children.length) {
-        const y = cursorY;
-        cursorY += nodeH + nodeGapY;
-        positions.set(n, { x: pad + depth * rankGapX, y, depth });
+      if (!n.children?.length) {
+        positions.set(n, { x: pad + depth * rankGapX, y: cursorY, depth });
+        cursorY += n._h + nodeGapY;
         return;
       }
       n.children.forEach((c) => layout(c, depth + 1));
-      const first = positions.get(n.children[0]);
-      const last = positions.get(n.children[n.children.length - 1]);
-      const y = (first.y + last.y) / 2;
-      positions.set(n, { x: pad + depth * rankGapX, y, depth });
-      // restore cursor already advanced by children
-      void height;
-      void y0;
+      const yMid =
+        (positions.get(n.children[0]).y +
+          n.children[0]._h / 2 +
+          positions.get(n.children[n.children.length - 1]).y +
+          n.children[n.children.length - 1]._h / 2) /
+          2 -
+        n._h / 2;
+      positions.set(n, { x: pad + depth * rankGapX, y: Math.max(pad, yMid), depth });
     }
 
     layout(tree, 0);
 
     let maxX = 0;
     let maxY = 0;
-    for (const p of positions.values()) {
-      maxX = Math.max(maxX, p.x + nodeW);
-      maxY = Math.max(maxY, p.y + nodeH);
+    for (const [n, p] of positions) {
+      maxX = Math.max(maxX, p.x + n._w);
+      maxY = Math.max(maxY, p.y + n._h);
     }
-    const width = maxX + pad;
-    const height = Math.max(maxY + pad, 320);
+    const width = maxX + pad + 48;
+    const height = maxY + pad + 28;
 
-    const palette = ["#0f5c4c", "#1f7a64", "#3f947c", "#6aaf96", "#97c7b6"];
+    const branchOf = new Map();
+    function assignBranch(n, branchIdx) {
+      branchOf.set(n, branchIdx);
+      (n.children || []).forEach((c) => assignBranch(c, branchIdx));
+    }
+    (tree.children || []).forEach((c, i) => assignBranch(c, i % BRANCHES.length));
+    branchOf.set(tree, 0);
 
     const edges = [];
+    const joints = [];
     function walkEdges(n) {
       const a = positions.get(n);
       for (const c of n.children || []) {
         const b = positions.get(c);
         if (a && b) {
-          const x1 = a.x + nodeW;
-          const y1 = a.y + nodeH / 2;
+          const pal = BRANCHES[branchOf.get(c) ?? 0];
+          const x1 = a.x + n._w;
+          const y1 = a.y + n._h / 2;
           const x2 = b.x;
-          const y2 = b.y + nodeH / 2;
+          const y2 = b.y + c._h / 2;
           const mx = (x1 + x2) / 2;
-          edges.push(`<path class="mm-edge" d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" />`);
+          edges.push(
+            `<path class="mm-edge" stroke="${pal.stroke}" d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" />`
+          );
+          joints.push(
+            `<circle class="mm-joint" cx="${x2}" cy="${y2}" r="3.2" fill="${pal.stroke}" />`
+          );
         }
         walkEdges(c);
       }
@@ -263,14 +384,40 @@
     function walkNodes(n) {
       const p = positions.get(n);
       if (!p) return;
-      const label = truncate(n.text, 18);
-      const fill = palette[Math.min(p.depth, palette.length - 1)];
-      const note = matchNote(n.text);
-      const clickable = note ? "mm-clickable" : "";
+      const depth = p.depth;
+      const pal = BRANCHES[branchOf.get(n) ?? 0];
+      const note = depth === 1 ? matchNote(n.text) : null;
+      const softNote = depth > 1 ? matchNote(n.text) : null;
+      const clickable = note || softNote ? `mm-clickable${softNote && !note ? " mm-soft" : ""}` : "";
+      const isRoot = depth === 0;
+      const isBranch = depth === 1;
+      const kind = isRoot ? "root" : isBranch ? "branch" : "leaf";
+      const rx = isRoot ? 16 : isBranch ? 12 : 10;
+      const fill = isRoot ? pal.stroke : isBranch ? pal.fill : pal.soft;
+      const strokeW = isRoot ? 0 : isBranch ? 2 : 1.25;
+      const labelPadX = isBranch ? padX + 6 : padX;
+      const linesHtml = n._lines.map((ln) => `<div class="mm-line">${escapeHtml(ln)}</div>`).join("");
+      // Badge lives in SVG (not foreignObject) so it never steals label height / clips title.
+      const badge = note
+        ? `<g class="mm-badge-g" transform="translate(${n._w - 38}, -9)">
+            <rect width="44" height="18" rx="9" fill="${pal.stroke}" />
+            <text x="22" y="12.5" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="Noto Sans TC, sans-serif">筆記</text>
+          </g>`
+        : "";
+
       nodes.push(`
-        <g class="mm-node ${clickable}" data-text="${escapeAttr(n.text)}" transform="translate(${p.x},${p.y})">
-          <rect width="${nodeW}" height="${nodeH}" rx="10" fill="${p.depth === 0 ? fill : "#fffdf8"}" stroke="${fill}" stroke-width="${p.depth === 0 ? 0 : 1.5}" />
-          <text x="${nodeW / 2}" y="${nodeH / 2 + 5}" text-anchor="middle" fill="${p.depth === 0 ? "#f7fffb" : "#1c1916"}" font-size="${p.depth === 0 ? 13 : 12}" font-family="Noto Sans TC, sans-serif">${escapeHtml(label)}</text>
+        <g class="mm-node ${kind} ${clickable}" data-text="${escapeAttr(n.text)}" transform="translate(${p.x},${p.y})">
+          <rect class="mm-shadow" x="2" y="3" width="${n._w}" height="${n._h}" rx="${rx}" />
+          <rect class="mm-card" width="${n._w}" height="${n._h}" rx="${rx}"
+            fill="${fill}" stroke="${pal.stroke}" stroke-width="${strokeW}" />
+          ${isBranch ? `<rect x="0" y="0" width="5" height="${n._h}" rx="2.5" fill="${pal.stroke}" />` : ""}
+          ${badge}
+          <foreignObject x="0" y="0" width="${n._w}" height="${n._h}">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="mm-label ${kind}"
+              style="width:${n._w}px;height:${n._h}px;padding:${padY}px ${labelPadX}px;box-sizing:border-box;${isRoot ? "" : `color:${pal.ink}`}">
+              <div class="mm-lines">${linesHtml}</div>
+            </div>
+          </foreignObject>
         </g>
       `);
       (n.children || []).forEach(walkNodes);
@@ -279,8 +426,22 @@
 
     el.mapHost.innerHTML = `
       <div class="mm-scroll">
-        <svg class="mm-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="心智圖">
+        <svg class="mm-svg" data-nat-w="${width}" data-nat-h="${height}"
+          width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"
+          preserveAspectRatio="xMinYMin meet" role="img" aria-label="心智圖">
+          <defs>
+            <pattern id="mm-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="1.1" fill="#cfc4b4" opacity="0.45" />
+            </pattern>
+            <linearGradient id="mm-wash" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fffdf8" />
+              <stop offset="100%" stop-color="#f0ebe1" />
+            </linearGradient>
+          </defs>
+          <rect width="${width}" height="${height}" fill="url(#mm-wash)" />
+          <rect width="${width}" height="${height}" fill="url(#mm-grid)" />
           ${edges.join("")}
+          ${joints.join("")}
           ${nodes.join("")}
         </svg>
       </div>
@@ -296,11 +457,46 @@
         }
       });
     });
+
+    // Default: fit whole tree into the panel (uniform scale — no text clipping).
+    requestAnimationFrame(() => applyMindmapZoom("fit"));
   }
 
-  function truncate(s, n) {
-    const t = String(s || "");
-    return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+  function applyMindmapZoom(mode) {
+    const scroll = el.mapHost?.querySelector(".mm-scroll");
+    const svg = el.mapHost?.querySelector(".mm-svg");
+    if (!scroll || !svg) return;
+    const natW = Number(svg.dataset.natW) || svg.viewBox.baseVal.width;
+    const natH = Number(svg.dataset.natH) || svg.viewBox.baseVal.height;
+    state.mapZoom = mode === "actual" ? "actual" : "fit";
+    if (state.mapZoom === "actual") {
+      svg.setAttribute("width", String(Math.round(natW)));
+      svg.setAttribute("height", String(Math.round(natH)));
+    } else {
+      // Prefer filling panel width (readable); allow vertical scroll instead of shrinking to a postage stamp.
+      const aw = Math.max(120, scroll.clientWidth - 16);
+      const ah = Math.max(120, scroll.clientHeight - 16);
+      let s = Math.min(1, aw / natW) * 0.98;
+      // Cap so height is at most ~2.4× viewport (still scrollable, not endless).
+      const maxH = ah * 2.4;
+      if (natH * s > maxH) s = maxH / natH;
+      const dw = Math.round(natW * s);
+      const dh = Math.round(natH * s);
+      svg.setAttribute("width", String(dw));
+      svg.setAttribute("height", String(dh));
+    }
+    scroll.scrollTo({ left: 0, top: 0 });
+    // Root is vertically centered in the tree — scroll so it stays in view (not stuck at y=0 top leaves only).
+    const root = el.mapHost.querySelector(".mm-node.root");
+    if (root) {
+      const sRect = scroll.getBoundingClientRect();
+      const rRect = root.getBoundingClientRect();
+      const deltaY = rRect.top + rRect.height / 2 - (sRect.top + sRect.height / 2);
+      scroll.scrollTop = Math.max(0, scroll.scrollTop + deltaY);
+    }
+    if (el.btnFit) {
+      el.btnFit.textContent = state.mapZoom === "fit" ? "實際大小" : "符合視窗";
+    }
   }
 
   function matchNote(text) {
@@ -499,8 +695,11 @@
   }
 
   el.btnFit?.addEventListener("click", () => {
-    const scroll = el.mapHost.querySelector(".mm-scroll");
-    if (scroll) scroll.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+    applyMindmapZoom(state.mapZoom === "fit" ? "actual" : "fit");
+  });
+
+  window.addEventListener("resize", () => {
+    if (state.tree && state.mapZoom === "fit") applyMindmapZoom("fit");
   });
 
   window.addEventListener("hashchange", route);
