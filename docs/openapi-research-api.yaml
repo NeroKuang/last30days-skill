@@ -6,6 +6,8 @@ info:
     Thin REST wrapper around the upstream last30days research engine.
     Successful POST /v1/research returns upstream Agent JSON pass-through.
     Base URL: https://last30days-research.zeabur.app
+
+    Omit optional request fields instead of sending null.
 servers:
   - url: https://last30days-research.zeabur.app
     description: Primary Zeabur domain
@@ -35,6 +37,12 @@ paths:
     get:
       operationId: getCapabilities
       summary: List available research sources (upstream --diagnose)
+      description: |
+        Return research sources currently available on the server.
+
+        Call this only when source availability matters or when the desired
+        source may be unavailable. Do not call before every research request
+        unnecessarily.
       security:
         - bearerAuth: []
       responses:
@@ -55,14 +63,42 @@ paths:
                     type: string
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected wrapper internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /v1/research:
     post:
       operationId: researchRecent
       summary: Run last-30-days style research; returns Agent JSON
       description: |
+        Research recent public discussion and evidence across sources supported by
+        the upstream last30days engine.
+
+        Use this action when the user asks about:
+        - recent sentiment
+        - recent product or company discussion
+        - recent developer/community reaction
+        - trends within the last 1–365 days
+        - competitor comparison
+        - recent evidence across multiple public sources
+
+        Prefer depth=quick for ordinary simple questions.
+        Use default when broader evidence is useful.
+        Use deep only when the user explicitly requests comprehensive research.
+
+        The response is upstream Agent JSON. Inspect source_status before
+        synthesizing the final answer.
+
         Maps validated fields to upstream last30days.py with
-        --emit=json --json-profile=agent. May take minutes; prefer depth=quick
-        unless the user needs deep recall. HTTP 200 body is upstream Agent JSON.
+        --emit=json --json-profile=agent. May take minutes.
+        Omit unused optional fields; do not send null.
       security:
         - bearerAuth: []
       requestBody:
@@ -72,19 +108,31 @@ paths:
             schema:
               $ref: "#/components/schemas/ResearchRequest"
             examples:
-              quick:
-                value:
-                  topic: AI coding agents
-                  days: 7
-                  depth: quick
-              default:
+              minimal:
+                summary: Minimal valid payload
                 value:
                   topic: Claude Code developer experience
                   days: 30
                   depth: default
+              advanced:
+                summary: Targeted sources and subreddits
+                value:
+                  topic: Laravel developers using AI coding tools
+                  days: 30
+                  depth: default
+                  search:
+                    - reddit
+                    - hackernews
+                    - github
+                  subreddits:
+                    - laravel
+                    - PHP
+                  verify_freshness: true
       responses:
         "200":
-          description: Upstream Agent JSON (schema owned by last30days engine)
+          description: |
+            Upstream Agent JSON (schema owned by last30days engine).
+            Treat as a loose object; future minor schema_version bumps may add fields.
           content:
             application/json:
               schema:
@@ -113,14 +161,40 @@ paths:
                     items: {}
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "429":
           description: Too many concurrent research runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected wrapper internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: Engine failed or invalid engine JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "504":
           description: Engine timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -129,6 +203,28 @@ components:
       bearerFormat: API_KEY
       description: RESEARCH_API_KEY (wrapper auth; not LAST30DAYS_API_KEY)
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          additionalProperties: true
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            request_id:
+              type: string
+            details:
+              description: Present on some 422 validation failures
+              type: array
+              items: {}
     ResearchRequest:
       type: object
       required:
@@ -148,24 +244,40 @@ components:
           type: string
           enum: [quick, default, deep]
           default: default
+          description: |
+            quick = simple / fast checks;
+            default = ordinary research;
+            deep = explicit comprehensive requests only.
         search:
           type: array
           items:
             type: string
-          nullable: true
-          description: Optional source allowlist tokens
+          description: |
+            Optional upstream source allowlist.
+
+            Examples:
+            ["reddit", "hackernews", "github"]
+
+            This field controls which sources are searched.
+            Do not put search keywords in this field.
         subreddits:
           type: array
           items:
             type: string
-          nullable: true
+          description: |
+            Optional subreddit targeting.
+            Use subreddit names without "r/".
+            Example: ["laravel", "PHP"].
         x_handle:
           type: string
-          nullable: true
-          description: X/Twitter handle without @
+          description: |
+            Optional resolved X/Twitter handle without @.
+            Omit this field if the entity's handle is uncertain.
         github_user:
           type: string
-          nullable: true
+          description: |
+            Optional resolved GitHub login.
+            Omit this field if the GitHub identity is uncertain.
         register:
           type: string
           enum: [default, exec, dev, creator, eli5]
@@ -178,8 +290,11 @@ components:
           default: false
         competitors_plan:
           type: object
-          nullable: true
           additionalProperties:
             type: object
             additionalProperties: true
-            description: Per-entity targeting (x_handle, subreddits, github_user, context, …)
+          description: |
+            Optional per-entity targeting for comparison research.
+            Only include handles/users you have already resolved.
+            Omit this field rather than guessing identities.
+            Shape: { "Entity": { "x_handle?", "subreddits?", "github_user?", "context?" } }
