@@ -199,3 +199,17 @@ research_recent(
 ```
 
 Prefer the OpenAPI Action over inventing URLs.
+
+---
+
+## After research: Knowledge capture（給要維護知識庫的 GPT）
+
+研究結束後若要沉澱成可瀏覽知識體／心智圖，遵循：
+
+**[`GPT-KNOWLEDGE-SPEC.md`](./GPT-KNOWLEDGE-SPEC.md)**
+
+- 寫入 `topics/<slug>/`（INDEX、mindmap.md、meta.json、notes、sources）
+- 更新 `catalog.json` → `./knowledge-browser/sync.sh` → commit → Zeabur Redeploy
+- 瀏覽：`https://last30days-research.zeabur.app/knowledge/`
+
+Custom GPT 可把 **GPT-CALL-GUIDE + GPT-KNOWLEDGE-SPEC** 一併貼進 Instructions。

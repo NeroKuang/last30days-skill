@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-08",
+  "topics": [
+    {
+      "slug": "ai-coding-agents",
+      "title": "AI Coding Agents",
+      "summary": "近 30 天社群訊號：記憶層、安全沙箱、採用與反彈、本地 harness、互補 stack。",
+      "window_days": 30,
+      "researched_at": "2026-09-08",
+      "coverage": {
+        "ok": ["reddit", "hackernews", "github", "jobs"],
+        "no_results": ["grounding"],
+        "absent": ["x", "youtube", "tiktok"]
+      },
+      "path": "topics/ai-coding-agents/"
+    }
+  ]
+}

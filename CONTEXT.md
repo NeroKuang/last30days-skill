@@ -44,5 +44,5 @@ _Avoid_: assuming Chrome/Safari cookies on Zeabur; promising full source coverag
 - Remaining ops defaults accepted for implementation: `RESEARCH_TIMEOUT_SECONDS` default 600; `RESEARCH_MAX_CONCURRENCY` default 2; writable `LAST30DAYS_MEMORY_DIR`; local dev port 5002
 
 **Live Zeabur Service**:
-Public Research API on NeroSP at `https://last30days-research.zeabur.app` (alias `https://last30days-api.zeabur.app`). Callers use Bearer `RESEARCH_API_KEY`; GPT instructions live in `docs/GPT-CALL-GUIDE.md` + `docs/openapi-research-api.yaml`.
+Public Research API on NeroSP at `https://last30days-research.zeabur.app` (alias `https://last30days-api.zeabur.app`). Callers use Bearer `RESEARCH_API_KEY`; GPT instructions live in `docs/GPT-CALL-GUIDE.md` + `docs/openapi-research-api.yaml`. Knowledge browser (synced static SPA) is mounted at `/knowledge/` — see `docs/KNOWLEDGE-BROWSER.md`.
 _Avoid_: LAST30DAYS_API_BASE client protocol; treating Zeabur RUNNING alone as healthy

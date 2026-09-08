@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Last30Days 知識庫</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <span class="logo">L30D</span>
+        <div>
+          <strong>知識庫</strong>
+          <span class="topbar-sub" id="catalog-status">載入中…</span>
+        </div>
+      </div>
+      <nav class="topbar-nav" id="topic-tabs" aria-label="主題"></nav>
+    </header>
+
+    <div class="layout" id="home-view">
+      <main class="home-main">
+        <h1>從研究到可讀知識</h1>
+        <p class="lede">每個主題先看心智圖掌握全貌，再點分支讀主張、證據與下一步。心智圖為水平樹狀展開（對齊常見網頁 mind map／markmap 大綱結構）。</p>
+        <div class="topic-cards" id="topic-cards"></div>
+      </main>
+    </div>
+
+    <div class="layout topic-layout is-hidden" id="topic-view" hidden>
+      <section class="map-panel" aria-label="心智圖">
+        <div class="map-toolbar">
+          <div>
+            <h2 id="map-title">心智圖</h2>
+            <p class="map-hint">左右捲動檢視全圖；點主分支開啟對應筆記</p>
+          </div>
+          <div class="map-actions">
+            <button type="button" class="ghost-btn" id="btn-fit">回到起點</button>
+          </div>
+        </div>
+        <div class="map-canvas-wrap">
+          <div id="markmap-host" class="markmap"></div>
+          <p class="map-status muted" id="map-status">載入心智圖…</p>
+        </div>
+      </section>
+
+      <div class="topic-body">
+        <aside class="rail" aria-label="目錄">
+          <div class="rail-block">
+            <h2>原子筆記</h2>
+            <nav id="notes" class="note-nav"></nav>
+          </div>
+          <div class="rail-links" id="doc-links"></div>
+        </aside>
+
+        <main class="reader" aria-live="polite">
+          <div class="reader-meta" id="reader-meta"></div>
+          <article class="prose" id="reader-body">
+            <p class="muted">載入中…</p>
+          </article>
+        </main>
+      </div>
+    </div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

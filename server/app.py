@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from server import __version__
 from server.auth import require_api_key
@@ -29,6 +31,11 @@ from server.models import (
     ResearchRequest,
 )
 from server.service import ResearchService
+
+# Repo-root knowledge browser (synced static SPA). Public read — not secrets.
+_KNOWLEDGE_BROWSER_DIR = (
+    Path(__file__).resolve().parent.parent / "knowledge-browser" / "public"
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -151,4 +158,18 @@ async def research(
     return await service.research(
         body,
         request_id=request.state.request_id,
+    )
+
+
+@app.get("/knowledge", include_in_schema=False)
+async def knowledge_redirect() -> RedirectResponse:
+    """Browser-friendly entry without trailing slash confusion."""
+    return RedirectResponse(url="/knowledge/", status_code=307)
+
+
+if _KNOWLEDGE_BROWSER_DIR.is_dir():
+    app.mount(
+        "/knowledge",
+        StaticFiles(directory=str(_KNOWLEDGE_BROWSER_DIR), html=True),
+        name="knowledge_browser",
     )

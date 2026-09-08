@@ -1,0 +1,117 @@
+{
+  "slug": "ai-coding-agents",
+  "title": "AI Coding Agents",
+  "researched_at": "2026-09-08",
+  "window_days": 30,
+  "query": "AI coding agents",
+  "depth": "default",
+  "api": "https://last30days-research.zeabur.app/v1/research",
+  "partial_coverage": true,
+  "nodes": [
+    {
+      "id": "root",
+      "label": "AI Coding Agents",
+      "kind": "root"
+    },
+    {
+      "id": "memory",
+      "label": "Persistent Memory",
+      "kind": "pattern",
+      "note": "01-persistent-memory.md"
+    },
+    {
+      "id": "security",
+      "label": "Security / Sandbox",
+      "kind": "pattern",
+      "note": "02-security-sandbox.md"
+    },
+    {
+      "id": "backlash",
+      "label": "Adoption vs Backlash",
+      "kind": "pattern",
+      "note": "03-adoption-backlash.md"
+    },
+    {
+      "id": "harness",
+      "label": "Local Harness",
+      "kind": "pattern",
+      "note": "04-harness-local.md"
+    },
+    {
+      "id": "stack",
+      "label": "Complementary Stacks",
+      "kind": "pattern",
+      "note": "05-complementary-stacks.md"
+    },
+    {
+      "id": "okf",
+      "label": "OKF Agent Memory",
+      "kind": "project",
+      "parent": "memory"
+    },
+    {
+      "id": "opencontext",
+      "label": "OpenContext MCP",
+      "kind": "project",
+      "parent": "memory"
+    },
+    {
+      "id": "grith",
+      "label": "Grith",
+      "kind": "project",
+      "parent": "security"
+    },
+    {
+      "id": "gitspawn",
+      "label": "GitSpawn",
+      "kind": "project",
+      "parent": "security"
+    },
+    {
+      "id": "slop",
+      "label": "Slop anxiety",
+      "kind": "signal",
+      "parent": "backlash"
+    },
+    {
+      "id": "gamedev",
+      "label": "r/gamedev pain",
+      "kind": "signal",
+      "parent": "backlash"
+    },
+    {
+      "id": "pi-opencode",
+      "label": "Pi / OpenCode",
+      "kind": "project",
+      "parent": "harness"
+    },
+    {
+      "id": "skills-hooks",
+      "label": "Skills + Hooks",
+      "kind": "project",
+      "parent": "stack"
+    },
+    {
+      "id": "cursor-cc",
+      "label": "Cursor + Claude Code",
+      "kind": "project",
+      "parent": "stack"
+    }
+  ],
+  "edges": [
+    { "from": "root", "to": "memory" },
+    { "from": "root", "to": "security" },
+    { "from": "root", "to": "backlash" },
+    { "from": "root", "to": "harness" },
+    { "from": "root", "to": "stack" },
+    { "from": "memory", "to": "okf" },
+    { "from": "memory", "to": "opencontext" },
+    { "from": "security", "to": "grith" },
+    { "from": "security", "to": "gitspawn" },
+    { "from": "backlash", "to": "slop" },
+    { "from": "backlash", "to": "gamedev" },
+    { "from": "harness", "to": "pi-opencode" },
+    { "from": "stack", "to": "skills-hooks" },
+    { "from": "stack", "to": "cursor-cc" }
+  ]
+}

@@ -138,3 +138,28 @@ def test_capabilities_ok(client: TestClient):
     assert data["available_sources"] == ["reddit", "hackernews"]
     assert "wrapper_version" in data
     assert "upstream_commit" in data
+
+
+def test_knowledge_browser_public(client: TestClient):
+    """Synced static knowledge SPA is mounted without auth."""
+    root = client.get("/knowledge/", follow_redirects=True)
+    assert root.status_code == 200
+    assert "text/html" in root.headers.get("content-type", "")
+    body = root.content.lower()
+    assert b"l30d" in body or "知識庫".encode("utf-8") in root.content
+
+    catalog = client.get("/knowledge/catalog.json")
+    assert catalog.status_code == 200
+    payload = catalog.json()
+    assert "topics" in payload
+    assert any(t.get("slug") == "ai-coding-agents" for t in payload["topics"])
+
+    note = client.get(
+        "/knowledge/topics/ai-coding-agents/notes/01-persistent-memory.md"
+    )
+    assert note.status_code == 200
+    assert b"Persistent Memory" in note.content
+
+    mindmap = client.get("/knowledge/topics/ai-coding-agents/mindmap.md")
+    assert mindmap.status_code == 200
+    assert b"AI Coding Agents" in mindmap.content or "持久記憶".encode("utf-8") in mindmap.content
