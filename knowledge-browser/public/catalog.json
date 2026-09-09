@@ -27,6 +27,19 @@
         "absent": []
       },
       "path": "topics/local-dual-machine-studio/"
+    },
+    {
+      "slug": "ai-frontend-design-skills",
+      "title": "AI Frontend Design Skills",
+      "summary": "官方 frontend-design Skill、DESIGN.md 方法、社群 skill 包、Figma MCP／Claude Design 工作流；反 AI slop。",
+      "window_days": 30,
+      "researched_at": "2026-09-09",
+      "coverage": {
+        "ok": ["reddit", "hackernews", "github", "web"],
+        "no_results": ["youtube"],
+        "absent": ["x"]
+      },
+      "path": "topics/ai-frontend-design-skills/"
     }
   ]
 }

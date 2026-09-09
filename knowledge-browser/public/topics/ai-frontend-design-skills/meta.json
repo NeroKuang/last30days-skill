@@ -1,0 +1,26 @@
+{
+  "slug": "ai-frontend-design-skills",
+  "title": "AI Frontend Design Skills",
+  "researched_at": "2026-09-09",
+  "window_days": 30,
+  "query": "AI frontend design Skills and methods",
+  "depth": "default",
+  "partial_coverage": true,
+  "nodes": [
+    { "id": "root", "label": "AI Frontend Design Skills", "kind": "root" },
+    { "id": "official", "label": "官方路徑", "kind": "pattern", "note": "01-official-frontend-design.md" },
+    { "id": "project", "label": "專案約束", "kind": "pattern", "note": "02-design-md-method.md" },
+    { "id": "packs", "label": "社群 Skill 包", "kind": "pattern", "note": "03-community-skill-packs.md" },
+    { "id": "toolchain", "label": "設計工具鏈", "kind": "pattern", "note": "04-figma-claude-design.md" },
+    { "id": "plugin", "label": "frontend-design plugin", "kind": "project", "parent": "official" },
+    { "id": "slop", "label": "反 AI slop", "kind": "signal", "parent": "project" }
+  ],
+  "edges": [
+    { "from": "root", "to": "official" },
+    { "from": "root", "to": "project" },
+    { "from": "root", "to": "packs" },
+    { "from": "root", "to": "toolchain" },
+    { "from": "official", "to": "plugin" },
+    { "from": "project", "to": "slop" }
+  ]
+}
