@@ -1,0 +1,42 @@
+{
+  "slug": "local-dual-machine-studio",
+  "title": "雙機本機創作堂",
+  "researched_at": "2026-09-09",
+  "window_days": 30,
+  "query": "Mac M5 Max 128GB + PC RTX 5080 12GB local creative studio Otaku Draw Things ComfyUI",
+  "depth": "default",
+  "partial_coverage": false,
+  "nodes": [
+    { "id": "root", "label": "雙機本機創作堂", "kind": "root" },
+    { "id": "decisions", "label": "決策日誌", "kind": "pattern", "note": "00-decision-log.md" },
+    { "id": "division", "label": "腦 Mac／畫筆 PC", "kind": "pattern", "note": "01-division-and-bounds.md" },
+    { "id": "mac", "label": "Mac 安裝", "kind": "pattern", "note": "02-mac-install.md" },
+    { "id": "pc", "label": "PC 安裝", "kind": "pattern", "note": "03-pc-install.md" },
+    { "id": "net", "label": "雙機連線", "kind": "pattern", "note": "04-networking.md" },
+    { "id": "week1", "label": "第一週驗收", "kind": "pattern", "note": "05-week1-acceptance.md" },
+    { "id": "mac-steps", "label": "Mac Day1-2 步驟", "kind": "project", "parent": "mac", "note": "06-mac-day1-day2.md" },
+    { "id": "frontend", "label": "Otaku vs ST", "kind": "project", "parent": "decisions", "note": "07-otaku-vs-st.md" },
+    { "id": "otaku", "label": "Otaku", "kind": "project", "parent": "mac" },
+    { "id": "lmstudio", "label": "LM Studio MLX", "kind": "project", "parent": "mac" },
+    { "id": "drawthings", "label": "Draw Things 已裝", "kind": "signal", "parent": "mac" },
+    { "id": "comfy", "label": "ComfyUI", "kind": "project", "parent": "pc" },
+    { "id": "vram12", "label": "12GB VRAM 上限", "kind": "signal", "parent": "pc" },
+    { "id": "lan8188", "label": "LAN :8188", "kind": "project", "parent": "net" }
+  ],
+  "edges": [
+    { "from": "root", "to": "decisions" },
+    { "from": "root", "to": "division" },
+    { "from": "root", "to": "mac" },
+    { "from": "root", "to": "pc" },
+    { "from": "root", "to": "net" },
+    { "from": "root", "to": "week1" },
+    { "from": "decisions", "to": "frontend" },
+    { "from": "mac", "to": "mac-steps" },
+    { "from": "mac", "to": "otaku" },
+    { "from": "mac", "to": "lmstudio" },
+    { "from": "mac", "to": "drawthings" },
+    { "from": "pc", "to": "comfy" },
+    { "from": "pc", "to": "vram12" },
+    { "from": "net", "to": "lan8188" }
+  ]
+}

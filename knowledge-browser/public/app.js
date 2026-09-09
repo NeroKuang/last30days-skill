@@ -133,6 +133,7 @@
 
     el.links.innerHTML = `
       <a href="${base}/INDEX.md" target="_blank" rel="noopener">主題索引</a>
+      <a href="${base}/SPEC.md" target="_blank" rel="noopener">權威 SPEC</a>
       <a href="${base}/mindmap.md" target="_blank" rel="noopener">心智圖 Markdown</a>
       <a href="${base}/sources.md" target="_blank" rel="noopener">來源列表</a>
     `;
